@@ -6,7 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from psyqa_identity import validate_items, check_maps, check_audio_receipts, preflight, check_run
+from dialogue_identity import SOURCES, validate_items, check_maps, check_audio_receipts, preflight, check_run
+from psymm_generation.core import INPUTS, normalized_dialogue
 
 
 def sample_items(dialogue='psyqa_000001_abc_a00', answer_index=0):
@@ -24,7 +25,73 @@ def sample_items(dialogue='psyqa_000001_abc_a00', answer_index=0):
     return items
 
 
-class PsyQAIdentityContract(unittest.TestCase):
+class DialogueIdentityContract(unittest.TestCase):
+    def normalized_items(self, source):
+        records = {
+            'esconv': dict(dialog=[dict(speaker='seeker', content='Hello'),
+                                   dict(speaker='supporter', content='Welcome')]),
+            'extes': dict(emotion_type='fear', dialog=[dict(speaker='seeker', content='Hello'),
+                                                      dict(speaker='supporter', content='Welcome')]),
+            'psydial': dict(emotion_type='fear', messages=[dict(role='user', content='你好'),
+                                                         dict(role='assistant', content='欢迎')]),
+            'openr1': dict(emotion_type='fear', conversation=[dict(patient='Hello',
+                                                                  counselor_content='Welcome')]),
+            'psych8k': dict(emotion_type='fear', input='Hello', output='Welcome'),
+            'psyqa': dict(emotion_type='fear', question='你好', description='问题',
+                         answers=[dict(answer_text='回答')]),
+        }
+        dialogue = next(normalized_dialogue(source, records[source], 1))
+        references = {item['role']: item['reference']
+                      for item in sample_items(dialogue['dialogue_id'])}
+        items = []
+        for turn in dialogue.pop('turns'):
+            reference = copy.deepcopy(references[turn['role']])
+            reference['reference_emotion'] = None if turn['emotion'] == 'neutral' else turn['emotion']
+            items.append(dict(dialogue, **turn, reference=reference,
+                              asset_id=f"{dialogue['dialogue_id']}_T{turn['turn_index']:04d}"))
+        return items
+
+    def test_all_six_normalized_sources_pass_the_same_identity_checks(self):
+        self.assertEqual(SOURCES, frozenset(INPUTS))
+        self.assertEqual(SOURCES, {'esconv', 'extes', 'openr1', 'psych8k', 'psydial', 'psyqa'})
+        for source in sorted(SOURCES):
+            with self.subTest(source=source):
+                report = validate_items(self.normalized_items(source))
+                self.assertEqual((report['source'], report['dialogue_count'], report['turns']),
+                                 (source, 1, 2))
+                self.assertEqual(report['scope'], 'independent_question_answer'
+                                 if source == 'psyqa' else 'whole_dialogue')
+
+    def test_all_sources_are_checked_before_each_model_or_export_stage(self):
+        import generate_multimodal as entry
+        import sys
+        for source in sorted(SOURCES):
+            items = self.normalized_items(source)
+            items[0]['reference']['portrait'] = items[1]['reference']['portrait']
+            for stage in ('audio', 'video', 'validate', 'export'):
+                with self.subTest(source=source, stage=stage), tempfile.TemporaryDirectory() as tmp:
+                    run = Path(tmp)
+                    (run/'plan.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in items),
+                                                encoding='utf-8')
+                    with patch.object(sys, 'argv', ['entry', stage, '--run', str(run)]), \
+                         patch('psymm_generation.cli.read_plan', return_value=items), \
+                         patch.object(entry, 'cli_main') as model:
+                        with self.assertRaisesRegex(ValueError, 'Unpaired reference'):
+                            entry.main()
+                        model.assert_not_called()
+                    self.assertEqual(json.loads((run/'identity_validation.json').read_text())['status'],
+                                     'failed')
+
+    def test_newly_covered_sources_reject_role_reference_changes(self):
+        for source in ('esconv', 'openr1', 'psych8k'):
+            with self.subTest(source=source):
+                items = self.normalized_items(source)
+                extra = copy.deepcopy(items[0])
+                extra['asset_id'] += '_repeat'
+                extra['reference']['audio_sha256'] = 'changed'
+                with self.assertRaisesRegex(ValueError, 'changes within dialogue role'):
+                    validate_items(items+[extra])
+
     def test_extes_empty_turns_only_are_removed_and_original_indices_recorded(self):
         import generate_multimodal as entry
         import sys

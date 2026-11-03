@@ -2,7 +2,7 @@
 import sys
 
 from psymm_generation.cli import main as cli_main
-from psyqa_identity import preflight
+from dialogue_identity import preflight
 
 
 def main():

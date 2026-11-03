@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from psymm_generation.core import INPUTS, atomic_json, digest, file_hash
 from psymm_generation.cli import read_plan
-from psyqa_identity import validate_items
+from dialogue_identity import validate_items
 
 
 def partitions(count, workers):

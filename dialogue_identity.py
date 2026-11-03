@@ -1,15 +1,12 @@
-"""CPU-only dialogue identity checks; never infer identities from legacy maps.
-
-The historical filename is retained for existing PsyQA launcher imports.
-"""
+"""CPU-only dialogue identity checks for all supported dataset sources."""
 import argparse
 import json
 import sqlite3
 from pathlib import Path
 
-from psymm_generation.core import atomic_json, digest
+from psymm_generation.core import INPUTS, atomic_json, digest
 
-SOURCES = {'psyqa', 'psydial', 'extes'}
+SOURCES = frozenset(INPUTS)
 
 
 def validate_items(items):
@@ -148,10 +145,7 @@ def preflight(argv):
     path = args.run/'plan.jsonl'
     if not path.exists():
         return
-    with path.open() as handle:
-        first = next((json.loads(line) for line in handle if line.strip()), {})
-    if first.get('source') in SOURCES:
-        check_run(args.run, args.stage)
+    check_run(args.run, args.stage)
 
 
 if __name__ == '__main__':

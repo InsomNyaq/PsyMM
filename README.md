@@ -79,7 +79,7 @@ bash run_multimodal.sh export --run "/path/to/pilot-run"
 
 Use `--gpu` only for an allocated device. The stages are resumable; `validate` and `export` check recorded assets and produce `multimodal_manifest.json`. The manifest contains local paths and is **not** a public dataset package. See [environment and paths](docs/ENVIRONMENT.md) before a full run.
 
-`psyqa_identity.py` is called automatically for the supported sources. It checks that the seeker and supporter retain distinct identities within a dialogue and that their audio and portrait references agree. These metadata checks do not measure perceived face or voice similarity.
+`dialogue_identity.py` is called automatically before the audio, video, validation and export stages for all six sources: ESConv, ExTES, OpenR1-Psy, Psych8k, PsyDial and PsyQA. It checks that the seeker and supporter retain distinct identities within a dialogue and that their audio and portrait references agree. These metadata checks do not measure perceived face or voice similarity.
 
 <a id="repository-guide"></a>
 ## 🛠️ Repository guide
@@ -87,7 +87,7 @@ Use `--gpu` only for an allocated device. The stages are resumable; `validate` a
 | Path | Role |
 | :-- | :-- |
 | [`generate_multimodal.py`](generate_multimodal.py), [`psymm_generation/`](psymm_generation/) | Normalize, plan, synthesize, validate and export |
-| [`psyqa_identity.py`](psyqa_identity.py) | Automatically check fixed role identities and paired audio/image references for PsyQA, PsyDial and ExTES |
+| [`dialogue_identity.py`](dialogue_identity.py) | Automatically check fixed role identities and paired audio/image references for all six datasets |
 | [`experiments/`](experiments/) | Data provenance audits, emotion annotation validation and audio/video quality evaluation |
 | [`tests/`](tests/) | CPU contracts and optional media integration tests |
 | `MeloTTS-main/`, `OpenVoice-main/`, `DICE-Talk-main/` | Adapted component source snapshots |
