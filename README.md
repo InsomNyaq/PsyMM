@@ -8,7 +8,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/project%20code-Apache--2.0-2d7658)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776ab)
-![Release: code only](https://img.shields.io/badge/release-code%20only-485a6b)
+[![Dataset: Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-PsyMM-ffbd45)](https://huggingface.co/datasets/InsomNyaLi/PsyMM)
 
 [Overview](#overview) · [Run the pipeline](#run-the-pipeline) · [Repository guide](#repository-guide) · [Data and models](#data-and-models) · [Related projects](#related-projects)
 
@@ -33,9 +33,9 @@ The seeker and supporter receive distinct identities that stay fixed **within on
 | Component source integrations | Included; see [upstream terms](#license-and-attribution) |
 | Dialogue corpus and reference media | Not included |
 | Model checkpoints and other runtime assets | Not included |
-| Public dataset download | In preparation   |
+| Public dataset | [PsyMM on Hugging Face](https://huggingface.co/datasets/InsomNyaLi/PsyMM); Psych8kMM upload in progress |
 
-The paper's aggregate dataset counts are research results, not a claim that those files can currently be downloaded from this repository.
+The Psych8kMM upload is in progress; the Hugging Face repository is not yet a complete release. The paper's aggregate dataset counts are research results, not a claim that all files are currently available.
 <a id="run-the-pipeline"></a>
 ## 🚀 Run the pipeline
 
